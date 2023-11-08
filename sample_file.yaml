@@ -1,0 +1,15 @@
+samples:
+  h112.R1: /home/jmg292/project/Exp10/Data/h112_R1.fastq.gz
+  h113.R1: /home/jmg292/project/Exp10/Data/h113_R1.fastq.gz
+  h115.R1: /home/jmg292/project/Exp10/Data/h115_R1.fastq.gz
+  h117.R1: /home/jmg292/project/Exp10/Data/h117_R1.fastq.gz
+  h112.R2: /home/jmg292/project/Exp10/Data/h112_R2.fastq.gz
+  h113.R2: /home/jmg292/project/Exp10/Data/h113_R2.fastq.gz
+  h115.R2: /home/jmg292/project/Exp10/Data/h115_R2.fastq.gz
+  h117.R2: /home/jmg292/project/Exp10/Data/h117_R2.fastq.gz
+
+datapath: /home/jmg292/project/Exp10/
+genome: /home/jmg292/project/Exp10/config/combined_genome.fa
+gtf: /home/jmg292/project/Exp10/config/combined.gtf
+manifest: /home/jmg292/project/Exp10/config/manifest.tsv
+genes_bed: /home/jmg292/project/Exp10/config/only_genes.bed

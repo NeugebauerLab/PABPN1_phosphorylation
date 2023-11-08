@@ -1,0 +1,7 @@
+#sample	treatment	datafile	comment
+EV_1	EV	h112_R1_td.fastq	MiSeq
+EV_2	EV	h112_R2_td.fastq	MiSeq
+EV_4	EV	h112_R3_td.fastq	MiSeq
+SA_1	SA	h115_R1_td.fastq	MiSeq
+SA_2	SA	h115_R2_td.fastq	MiSeq
+SA_3	SA	h115_R3_td.fastq	MiSeq

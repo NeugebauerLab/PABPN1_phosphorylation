@@ -1,6 +1,6 @@
 # PABPN1_phosphorylation
 
-# Preprocessing, mapping, splicing, and poly(A) tail lengths quantification
+# Preprocessing, mapping, splicing, and poly(A) tail lengths quantification (Long-read Sequencing)
 
 Preprocessing, mapping, splicing, and poly(A) tail lengths quantification can be carried out with the attached Snakemake pipeline. Be sure to create/adjust the sample.yaml file as needed.
 

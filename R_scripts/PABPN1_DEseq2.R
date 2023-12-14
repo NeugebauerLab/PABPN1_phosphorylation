@@ -16,11 +16,11 @@ library(viridis)
 
 ###Create dds -> This does not need to be changed for each comparison
 #Set working directory for the analysis 
-setwd("/Users/jacksongordon/Desktop/Neugebauer_Lab/Experiments/Exp27_PABPN1_mutants_diffExp/Data_processing/results/DESeq2/")
+setwd("./")
 
 # locate files from an input table of sample information
-dir <- "/Users/jacksongordon/Desktop/Neugebauer_Lab/Experiments/Exp27_PABPN1_mutants_diffExp/Data_processing/results/Salmon/quants"
-samples <- read.table("/Users/jacksongordon/Desktop/Neugebauer_Lab/Experiments/Exp27_PABPN1_mutants_diffExp/Data_processing/results/salmon/samples.txt", header=TRUE)
+dir <- "path/to/salmon/quants/"
+samples <- read.table("salmon/samples.txt", header=TRUE)
 files <- file.path(dir, samples$file_name)
 names(files) <- samples$sample
 

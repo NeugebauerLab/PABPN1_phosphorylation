@@ -1,4 +1,4 @@
-# PABPN1_phosphorylation
+# PABPN1 Phosphorylation: RNA-seq analyses
 
 # Preprocessing, mapping, splicing, and poly(A) tail lengths quantification (Long-read Sequencing)
 
@@ -17,3 +17,6 @@ Notebooks:
  Poly(A) tail lengths per gene
  Poly(A) tail lengths per splice-isoform
  Readlengths and coverage for LRS data
+
+# Citation
+If you use or dicusss any of this code please cite manuscript. 

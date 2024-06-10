@@ -1,0 +1,15 @@
+samples:
+  EV.R1: ./data/h112_R1.fastq.gz
+  WT.R1: ./data/h113_R1.fastq.gz
+  4SA.R1: ./data/h115_R1.fastq.gz
+  4SD.R1: ./data/h117_R1.fastq.gz
+  EV.R2: ./data/h112_R2.fastq.gz
+  WT.R2: ./data/h113_R2.fastq.gz
+  4SA.R2: ./data/h115_R2.fastq.gz
+  4SD.R2: ./data/h117_R2.fastq.gz
+
+datapath: ./
+genome: ./config/combined_genome.fa
+gtf: ./config/combined.gtf
+manifest: ./config/manifest.tsv
+genes_bed: ./config/only_genes.bed

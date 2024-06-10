@@ -1,0 +1,250 @@
+###Author: Jackson Gordon
+###Date updated: 06/06/2024
+
+#Specify samples to be analyzed in .yaml file
+configfile: "./config/sample_file.yaml"
+ruleorder: tails_genes_to_isos > get_tails_genes
+
+#set datapath in the Snakefile - this will also be set in the config file
+datapath="./"
+
+###functions   
+#funtion to get fastq for samples 
+def get_input_fastqs(wildcards):
+    return config["samples"][wildcards.sample]
+
+#Rule to get all* files from the pipeline
+rule all:
+    input:
+        expand("./results/prinseq/{sample}_td.fastq.gz", sample=config["samples"]),
+        expand("./results/mapping/{sample}_hg38.bam", sample=config["samples"]),
+        expand("./results/mapping/{sample}_hg38.bam.bai", sample=config["samples"]),
+        expand("./results/mapping/{sample}_hg38.bed", sample=config["samples"]),
+        "./results/splicing/quantify/all_matrix.counts.tsv",
+        "./results/splicing/IR/IR_isoforms.bed",
+        expand("./results/polyA_len/{sample}_ann_genes.bed", sample=config["samples"]),
+        expand("./results/polyA_len/{sample}_ann_tnx.bed", sample=config["samples"]),
+        expand("./results/polyA_len/{sample}_polyA.txt", sample=config["samples"]),
+        expand("./results/polyA_len/isoforms/isoforms_{sample}_polyA.txt", sample=config["samples"]),
+        expand("./results/polyA_len/per_gene/isoforms_{sample}_per_gene.tsv", sample=config["samples"]),
+        expand("./results/polyA_len/per_gene/{sample}_per_gene.tsv", sample=config["samples"])
+
+###Rules for preprocessing
+#Deduplication
+rule prinseq:
+    input:
+        get_input_fastqs
+    output:
+        "{datapath}results/prinseq/{sample}_td.fastq.gz"
+    resources:
+        mem_mb=32000
+    shell:
+        "zcat {input} | " 
+        "perl {wildcards.datapath}workflow/scripts/prinseq-lite.pl -fastq stdin -derep 2 -out_format 3 -out_good stdout -out_bad null | " 
+        "perl {wildcards.datapath}workflow/scripts/prinseq-lite.pl -fastq stdin -trim_left 5 -out_format 3 -out_good stdout -out_bad null | gzip > {output}"
+
+#Concatenate reads for later steps
+rule cat_reads:
+    input:
+        expand(config["datapath"] + "results/prinseq/{sample}_td.fastq.gz", sample=config["samples"])
+    output:
+        "{datapath}results/prinseq/all_reads.fastq"
+    shell:
+        "zcat {input} > {output}"
+
+#Mapping - minimap2
+rule minimap2:
+    input:
+        genome=config["genome"],
+        fa="{datapath}results/prinseq/{sample}_td.fastq.gz"
+    resources:
+        mem_mb=64000
+    output:
+        "{datapath}results/mapping/{sample}_sort.bam"
+    params:
+        x="splice:hq",
+        secondary="no",
+        t="12"
+    shell:
+        "minimap2 -x {params.x} --secondary {params.secondary} -t {params.t} -a -u f {input.genome} {input.fa} |"
+        "samtools sort |" 
+        "samtools view -S -b | " 
+        "samtools calmd - {input.genome} | " 
+        "samtools sort > {output} ; samtools index {output}"
+
+#Separate reads that mapped to hg38 genome and exogenous sequence
+rule separate_reads:
+    input:
+        bam = "{datapath}results/mapping/{sample}_sort.bam",
+        plasmid_bed = "{datapath}config/plasmid_region.bed"
+    output:
+        hg38 = "{datapath}results/mapping/{sample}_hg38.bam",
+        plasmid = "{datapath}results/mapping/{sample}_plasmid.bam"
+    shell:
+        "samtools view {input.bam} -F 4 -L {input.plasmid_bed} -h -U {output.hg38} -o {output.plasmid}"
+
+#Generate index files
+rule index:
+    input:
+        hg38 = "{datapath}results/mapping/{sample}_hg38.bam",
+        plasmid = "{datapath}results/mapping/{sample}_plasmid.bam"
+    output:
+        "{datapath}results/mapping/{sample}_hg38.bam.bai",
+        "{datapath}results/mapping/{sample}_plasmid.bam.bai"
+    run:
+        shell("samtools index {input.hg38}"),
+        shell("samtools index {input.plasmid}")
+
+#Convert to .bed12
+rule bedtools_bamtobed:
+    input:
+        bam="{datapath}results/mapping/{sample}_hg38.bam"
+    output:
+        "{datapath}results/mapping/{sample}_hg38.bed"
+    shell:
+        "bedtools bamtobed -bed12 -i {input.bam} > {output}"
+
+
+###Rules for FLAIR ()
+#flair correct
+rule flair_correct:
+    input:
+        genome=config["genome"],
+        gtf=config["gtf"],
+        bed="{datapath}results/mapping/{sample}_hg38.bed"
+    resources:
+        mem_mb=64000    
+    conda:
+        "flair_basic_conda_env"
+    output:
+        "{datapath}results/splicing/correct/{sample}_all_corrected.bed"
+    shell: 
+        "flair correct -q {input.bed} -g {input.genome} -f {input.gtf} -o " + config['datapath'] + "results/splicing/correct/{wildcards.sample}"
+
+#concatenate corrected bed files
+rule cat_files:
+    input:
+        expand(config['datapath'] + "results/splicing/correct/{sample}_all_corrected.bed", sample=config["samples"])
+    output:
+        config['datapath'] + "results/splicing/correct/allsamples_corrected.bed"
+    shell:
+        "cat {input} > {output}"
+
+#flair collapse
+rule flair_collapse:
+    input:
+        genome=config['genome'],
+        gtf=config['gtf'],
+        fa=config['datapath'] + "results/prinseq/all_reads.fastq",
+        bed=config['datapath'] + "results/splicing/correct/allsamples_corrected.bed",
+    conda:
+        "flair_basic_conda_env"
+    output:
+        config['datapath'] + "results/splicing/collpase/all.isoforms.gtf",
+        config['datapath'] + "results/splicing/collpase/all.isoforms.bed",
+        config['datapath'] + "results/splicing/collpase/all.isoforms.fa"
+    shell:
+        "flair collapse -g {input.genome} -f {input.gtf} -r {input.fa} -q {input.bed} --check_splice -o " + config['datapath'] + "results/splicing/collpase/all"
+
+#flair quantify
+rule flair_quantify:
+    input:
+        manifest=config['manifest'],
+        isoforms="{datapath}results/splicing/collpase/all.isoforms.fa"
+    conda:
+        "flair_basic_conda_env"
+    output:
+        "{datapath}results/splicing/quantify/all_matrix.counts.tsv",
+    shell:
+        "flair quantify -r {input.manifest} -i {input.isoforms} --generate_map -o {wildcards.datapath}results/splicing/quantify/all_matrix"
+
+rule flair_quant_rename:
+    input:
+        "{datapath}results/splicing/quantify/all_matrix.counts.tsv"
+    output:
+        "{datapath}results/splicing/quantify/{sample}_readmap.txt"
+    shell:
+        "for file in {wildcards.datapath}results/splicing/quantify/all_matrix.{wildcards.sample}*.txt; do mv ${{file}} {wildcards.datapath}results/splicing/quantify/{wildcards.sample}_readmap.txt; done"
+
+#flair mark intron retention
+rule intron_retention:
+    input:
+        "{datapath}results/splicing/collpase/all.isoforms.bed"
+    conda:
+        "flair_basic_conda_env"
+    output:
+        bed = "{datapath}results/splicing/IR/IR_isoforms.bed", 
+        coords = "{datapath}results/splicing/IR/IR_coords.txt"
+    shell:
+        "mark_intron_retention {input} {output.bed} {output.coords}"
+
+rule flair_diff_splice:
+    input:
+        isoforms = "{datapath}results/splicing/collpase/all.isoforms.bed",
+        counts = "{datapath}results/splicing/quantify/all_matrix.counts.tsv.tpm.tsv"
+    conda:
+        "flair_basic_conda_env"
+    output:
+        "{datapath}results/splicing/diffSplce/diffsplice.ir.events.quant.tsv"
+    shell:
+        "cd /home/jmg292/project/Exp10/results/splicing/diffSplce/; "
+        "flair diffSplice -i {input.isoforms} -q {input.counts}"
+
+
+###polyA tail length quantification
+#Intersect reads with annotation file containing annotated genes to obtain read names
+rule polyA_intersect:
+    input:
+        bam_genes="{datapath}results/mapping/{sample}_sort.bam",
+        bam_tnx="{datapath}results/mapping/{sample}_sort.bam",
+        genes=config['genes_bed'],
+        tnx = "{datapath}results/splicing/collpase/all.isoforms.bed"
+    output:
+        out_genes = "{datapath}results/polyA_len/{sample}_ann_genes.bed",
+        out_tnx = "{datapath}results/polyA_len/{sample}_ann_tnx.bed"
+    run:
+        shell("bedtools intersect -bed -wo -s -f 0.9 -abam {input.bam_genes} -b {input.genes} > {output.out_genes}"),
+        shell("bedtools intersect -bed -wo -s -f 0.9 -abam {input.bam_tnx} -b {input.tnx} > {output.out_tnx}")
+
+rule get_tails_genes:
+    input:
+        bam="{datapath}results/mapping/{sample}_hg38.bam",
+        ann="{datapath}results/polyA_len/{sample}_ann_genes.bed",
+    conda:
+        "polyA_env"
+    resources:
+        mem_mb=32000  
+    output:
+        "{datapath}results/polyA_len/{sample}_polyA.txt"
+    shell:
+        "python {wildcards.datapath}workflow/scripts/get_tails.py {input.bam} -bed {input.ann} > {output}"
+
+rule tails_genes_to_isos:
+    input:
+        mapfile="{datapath}results/splicing/quantify/{sample}_readmap.txt",
+        polyA_file="{datapath}results/polyA_len/{sample}_polyA.txt",
+    conda:
+        "polyA_env"
+    output:
+        "{datapath}results/polyA_len/isoforms/isoforms_{sample}_polyA.txt"
+    shell:
+        "python {wildcards.datapath}workflow/scripts/genes_to_isoTails.py -i {input.mapfile} -p {input.polyA_file} -o {output}"
+
+rule tails_per_gene_isoform:
+    input:
+        gene_df = "{datapath}results/polyA_len/{sample}_polyA.txt",
+        iso_df = "{datapath}results/polyA_len/isoforms/isoforms_{sample}_polyA.txt"
+    conda:
+        "polyA_env"
+    params: 
+        m="10"
+    resources:
+        mem_mb=32000 
+    output:
+        gene_out = "{datapath}results/polyA_len/per_gene/{sample}_per_gene.tsv",
+        iso_out = "{datapath}results/polyA_len/per_gene/isoforms_{sample}_per_gene.tsv"
+    shell:
+        "python {wildcards.datapath}workflow/scripts/tails_per_gene.py -i {input.gene_df} -m {params.m} -o {output.gene_out}; "
+        "python {wildcards.datapath}workflow/scripts/tails_per_gene.py -i {input.iso_df} -m {params.m} -o {output.iso_out}"
+
+        

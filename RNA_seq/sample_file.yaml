@@ -1,0 +1,17 @@
+samples:
+  EV_R1: ./data/EV_R1
+  EV_R2: ./data/EV_R2
+  EV_R3: ./data/EV_R3
+  WT_R1: ./data/WT_R1
+  WT_R2: ./data/WT_R2
+  WT_R3: ./data/WT_R3
+  4SA_R1: ./data/4SA_R1
+  4SA_R2: ./data/4SA_R2
+  4SA_R3: ./data/4SA_R3
+  4SD_R1: ./data/4SD_R1
+  4SD_R2: ./data/4SD_R2
+  4SD_R3: ./data/4SD_R3
+
+datapath: ./
+genome: .config/combined_genome.fa
+gtf: ./combined.gtf

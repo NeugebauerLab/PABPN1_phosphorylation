@@ -1,0 +1,117 @@
+###Author: Jackson Gordon
+###Date updated: 06/06/2024
+
+datapath="./"
+#Specify samples to be analyzed in .yaml file
+configfile: "config/sample_file.yaml"
+
+rule all:
+    input:
+        expand(datapath + "results/qc/{sample}_{num}.fastq", sample=config["samples"], num=['1', '2']),
+        expand(datapath + "results/mapping/{sample}Aligned.sortedByCoord.out.bam", sample=config["samples"]),
+        expand(datapath + "results/mapping/separated/{sample}_hg38.bam.bai", sample=config["samples"]),
+        expand(datapath + "results/mapping/separated/{sample}_plasmid.bam.bai", sample=config["samples"]),
+        expand(datapath + "results/salmon/quants/{sample}_quant/quant.sf", sample=config["samples"]),
+        expand(datapath + "results/salmon/quants/{sample}_quant/quant2/quant.sf", sample=config["samples"]),
+        expand(datapath + "results/apa/quants/{sample}_utr_quant/quant.sf", sample=config["samples"]),
+        datapath + "results/apa/pau_results.txt"
+
+#Preprocessing (fastp)
+rule fastp:
+    input: 
+        r1 = "{datapath}data/{sample}/{sample}_R1.fastq.gz",
+        r2 = "{datapath}data/{sample}/{sample}_R2.fastq.gz"
+    output: 
+        out1 = "{datapath}results/qc/{sample}_1.fastq",
+        out2 = "{datapath}results/qc/{sample}_2.fastq",
+        json = "{datapath}results/qc/{sample}.json",
+        html = "{datapath}results/qc/{sample}.html"
+    conda:
+        "fastp"
+    shell:
+        "fastp --in1 {input.r1} --in2 {input.r2} --out1 {output.out1} --out2 {output.out2} --json {output.json} --html {output.html}"
+
+#mapping
+rule star_map:
+    input:
+        r1 = "{datapath}results/qc/{sample}_1.fastq",
+        r2 = "{datapath}results/qc/{sample}_2.fastq",
+        genome = "{datapath}config/STARindex"
+    resources:
+        mem_mb=64000
+    params:
+        out_pre="{datapath}results/mapping/{sample}"
+    output:
+        "{datapath}results/mapping/{sample}Aligned.sortedByCoord.out.bam"
+    shell:
+        "STAR --runMode alignReads --genomeDir {input.genome} --readFilesIn {input.r1} {input.r2} --outFileNamePrefix {params.out_pre} --outSAMtype BAM SortedByCoordinate --outFilterMismatchNmax 2 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000"
+
+rule separate_reads:
+    input:
+        bam = "{datapath}results/mapping/{sample}Aligned.sortedByCoord.out.bam",
+        plasmid_bed = "{datapath}config/plasmid_region.bed"
+    output:
+        hg38 = "{datapath}results/mapping/separated/{sample}_hg38.bam",
+        plasmid = "{datapath}results/mapping/separated/{sample}_plasmid.bam"
+    shell:
+        "samtools view {input.bam} -F 4 -L {input.plasmid_bed} -h -U {output.hg38} -o {output.plasmid}"
+
+rule index:
+    input:
+        hg38 = "{datapath}results/mapping/separated/{sample}_hg38.bam",
+        plasmid = "{datapath}results/mapping/separated/{sample}_plasmid.bam"
+    output:
+        "{datapath}results/mapping/separated/{sample}_hg38.bam.bai",
+        "{datapath}results/mapping/separated/{sample}_plasmid.bam.bai"
+    run:
+        shell("samtools index {input.hg38}"),
+        shell("samtools index {input.plasmid}")
+
+rule Salmon:
+    input:
+        r1 = "{datapath}results/qc/{sample}_1.fastq",
+        r2 = "{datapath}results/qc/{sample}_2.fastq",
+        index = "{datapath}config/combined_index"
+    conda:
+        "salmon"
+    resources:
+        mem_mb=64000
+    output:
+        "{datapath}results/salmon/quants/{sample}_quant/quant.sf"
+    shell:
+        "salmon quant -i {input.index} -l A -1 {input.r1} -2 {input.r2} --validateMappings --gcBias -o {wildcards.datapath}results/salmon/quants/{wildcards.sample}_quant"
+
+rule tnx_id_trim_salmon:
+    input:
+        "{datapath}results/salmon/quants/{sample}_quant/quant.sf"
+    output:
+        "{datapath}results/salmon/quants/{sample}_quant/quant2/quant.sf"
+    conda:
+        "polyA_env"
+    shell: 
+        "python workflow/scripts/tid_trim.py -q {input} -o {output}"
+
+rule qapa_quant:
+    input:
+        r1 = "{datapath}results/qc/{sample}_1.fastq",
+        r2 = "{datapath}results/qc/{sample}_2.fastq",
+        index = "{datapath}config/utr_library"
+    output:
+        "{datapath}results/apa/quants/{sample}_utr_quant/quant.sf"
+    conda:
+        "salmon"
+    shell:
+        "salmon quant -i {input.index} -l A -1 {input.r1} -2 {input.r2} --validateMappings --gcBias -o {wildcards.datapath}results/apa/quants/{wildcards.sample}_utr_quant"
+
+rule qapa:
+    input:
+        quants = expand(datapath + "results/apa/quants/{sample}_utr_quant/quant.sf", sample=config["samples"]),
+        db = "{datapath}config/mart_export.txt"
+    output:
+        "{datapath}results/apa/pau_results.txt"
+    conda:
+        "qapa"
+    shell:
+        "qapa quant --db {input.db} {input.quants} > {output}"
+
+

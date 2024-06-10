@@ -19,4 +19,4 @@ Notebooks:
  Readlengths and coverage for LRS data
 
 # Citation
-If you use or dicusss any of this code please cite manuscript. 
+If you use or dicusss any of this code please cite out manuscript. 

@@ -1,9 +1,15 @@
 # PABPN1 Phosphorylation: RNA-seq analyses
 
-# Preprocessing, mapping, splicing, and poly(A) tail lengths quantification (Long-read Sequencing)
-
+### Long read sequencing
 Preprocessing, mapping, splicing, and poly(A) tail lengths quantification can be carried out with the attached Snakemake pipeline. Be sure to create/adjust the sample.yaml file as needed.
 
+### RNA-seq
+Preprocessing, mapping, and transcript quantification can be carried out with the attached Snakemake pipeline. Be sure to create/adjust the sample.yaml file as needed.
+
+### TimeLapse-seq
+Preprocessing, mapping, and mutational profiling can be carried out with the attached Snakemake pipeline. Be sure to create/adjust the sample.yaml file as needed.
+
+### Dependencies
 Make sure the following dependencies are installed:
 
 [Prinseq](https://prinseq.sourceforge.net/)\

@@ -187,7 +187,7 @@ rule flair_diff_splice:
     output:
         "{datapath}results/splicing/diffSplce/diffsplice.ir.events.quant.tsv"
     shell:
-        "cd ./results/splicing/diffSplce/; "
+        "cd {wildcards.datapath}results/splicing/diffSplce/; "
         "flair diffSplice -i {input.isoforms} -q {input.counts}"
 
 

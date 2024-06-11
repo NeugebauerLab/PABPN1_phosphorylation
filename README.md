@@ -28,5 +28,3 @@ Code is arranged according to Figure number.
  Figure S6 - Comparing poly(A) tail lengths by gene and differential gene expression.\
  Figure S7 - RNA synthesis rates from TimeLapse-seq.
 
-# Citation
-If you use or dicusss any of this code please cite out manuscript. 

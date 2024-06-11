@@ -28,7 +28,7 @@ Make sure the following dependencies are installed:
 
 # Plotting and correlative analyses
 
-Code for making plots and carrying out statistical and correlative comparisons (e.g. tail length vs. RNA stability) can be found the attached jupyter notebooks. 
+Code for making plots and carrying out statistical analyses and correlative comparisons can be found the attached jupyter notebooks. 
 
 Code is arranged according to Figure number.
 

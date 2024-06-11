@@ -12,6 +12,8 @@ Make sure the following dependencies are installed:
 [Samtools](https://www.htslib.org/)\
 [Bedtools](https://bedtools.readthedocs.io/en/latest/index.html)\
 [Flair](https://flair.readthedocs.io/en/latest/)\
+[fastp](https://github.com/OpenGene/fastp)
+[STAR](https://github.com/alexdobin/STAR)
 [QAPA](https://github.com/morrislab/qapa)\
 [bam2bakR](https://github.com/simonlabcode/bam2bakR)\
 [bakR](https://github.com/simonlabcode/bakR)

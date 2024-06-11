@@ -6,6 +6,13 @@ Preprocessing, mapping, splicing, and poly(A) tail lengths quantification can be
 
 Make sure the following dependencies are installed:
 
+[Prinseq](https://prinseq.sourceforge.net/)
+[Snakemake](https://snakemake.readthedocs.io/en/stable/index.html)
+[minimap2](https://lh3.github.io/minimap2/minimap2.html)
+[Samtools](https://www.htslib.org/)
+[Bedtools](https://bedtools.readthedocs.io/en/latest/index.html)
+[Flair](https://flair.readthedocs.io/en/latest/)
+[QAPA](https://github.com/morrislab/qapa)
 
 
 # Plotting and correlative analyses

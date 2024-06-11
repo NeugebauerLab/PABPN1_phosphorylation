@@ -12,7 +12,7 @@ Make sure the following dependencies are installed:
 [Samtools](https://www.htslib.org/)\
 [Bedtools](https://bedtools.readthedocs.io/en/latest/index.html)\
 [Flair](https://flair.readthedocs.io/en/latest/)\
-[QAPA](https://github.com/morrislab/qapa)\
+[QAPA](https://github.com/morrislab/qapa)
 
 
 # Plotting and correlative analyses

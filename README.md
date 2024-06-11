@@ -13,7 +13,7 @@ Make sure the following dependencies are installed:
 [Bedtools](https://bedtools.readthedocs.io/en/latest/index.html)\
 [Flair](https://flair.readthedocs.io/en/latest/)\
 [QAPA](https://github.com/morrislab/qapa)\
-[bam2bakR](https://github.com/simonlabcode/bam2bakR)
+[bam2bakR](https://github.com/simonlabcode/bam2bakR)\
 [bakR](https://github.com/simonlabcode/bakR)
 
 

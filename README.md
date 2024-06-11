@@ -4,6 +4,10 @@
 
 Preprocessing, mapping, splicing, and poly(A) tail lengths quantification can be carried out with the attached Snakemake pipeline. Be sure to create/adjust the sample.yaml file as needed.
 
+Make sure the following dependencies are installed:
+
+
+
 # Plotting and correlative analyses
 
 Code for making plots and carrying out statistical and correlative comparisons (e.g. tail length vs. RNA stability) can be found the attached jupyter notebooks. 
